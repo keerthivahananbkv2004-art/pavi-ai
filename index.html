@@ -19,15 +19,12 @@ header {
   text-align: center;
   font-size: 1.5em;
   font-weight: bold;
-  letter-spacing: 1px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
 #chat {
   padding: 20px;
   height: 68vh;
   overflow-y: auto;
-  scroll-behavior: smooth;
 }
 
 .msg {
@@ -37,19 +34,16 @@ header {
   max-width: 75%;
   font-size: 0.95em;
   line-height: 1.5;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   word-wrap: break-word;
 }
 
 .user {
   background: #d1e7dd;
   margin-left: auto;
-  border: 1px solid #a5d6a7;
 }
 
 .bot {
   background: #ffffff;
-  border: 1px solid #cfd8dc;
 }
 
 #quick {
@@ -73,45 +67,34 @@ header {
   display: flex;
   padding: 12px;
   background: #ffffff;
-  box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
 }
 
 input {
   flex: 1;
   padding: 12px;
-  border: 1px solid #cfd8dc;
   border-radius: 8px;
-  font-size: 1em;
-  outline: none;
-}
-
-input:focus {
-  border: 1px solid #4CAF50;
+  border: 1px solid #ccc;
 }
 
 button.send {
   padding: 12px 20px;
   margin-left: 10px;
-  background: linear-gradient(90deg, #4CAF50, #66bb6a);
+  background: #4CAF50;
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 1em;
-  cursor: pointer;
 }
 
-/* Typing */
 .typing span {
   animation: blink 1.2s infinite;
 }
-
-.typing span:nth-child(2) { animation-delay: 0.2s; }
-.typing span:nth-child(3) { animation-delay: 0.4s; }
+.typing span:nth-child(2){animation-delay:0.2s;}
+.typing span:nth-child(3){animation-delay:0.4s;}
 
 @keyframes blink {
-  0% { opacity: 0.2; }
-  20% { opacity: 1; }
-  100% { opacity: 0.2; }
+  0% {opacity:0.2;}
+  20% {opacity:1;}
+  100% {opacity:0.2;}
 }
 </style>
 </head>
@@ -134,53 +117,71 @@ button.send {
 </div>
 
 <script>
-const API = "https://sincere-urgent-shuffle.ngrok-free.dev/ask"; // 🔁 replace this
+
+// 🔥 IMPORTANT — UPDATE WHEN NGROK CHANGES
+const API = "https://sincere-urgent-shuffle.ngrok-free.dev/ask";
 
 function add(text,type){
  let d=document.createElement("div");
  d.className="msg "+type;
-
- // preserve formatting
- d.innerHTML = text.replace(/\n/g, "<br>");
-
- chat.appendChild(d);
- chat.scrollTop=chat.scrollHeight;
+ d.innerHTML = text.replace(/\n/g,"<br>");
+ document.getElementById("chat").appendChild(d);
+ document.getElementById("chat").scrollTop=999999;
  return d;
 }
 
 function quick(text){
- msg.value = text;
+ document.getElementById("msg").value=text;
  send();
 }
 
 async function send(){
- let m=msg.value.trim();
+ let input = document.getElementById("msg");
+ let m = input.value.trim();
  if(!m) return;
 
  add(m,"user");
- msg.value="";
+ input.value="";
 
- let t=add("Thinking <span class='typing'><span>.</span><span>.</span><span>.</span></span>","bot");
+ let t = add("Thinking <span class='typing'><span>.</span><span>.</span><span>.</span></span>","bot");
 
  try {
-   let r=await fetch(API,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({message:m})
+   const r = await fetch(API, {
+     method:"POST",
+     headers:{"Content-Type":"application/json"},
+     body: JSON.stringify({message:m})
    });
 
-   let data=await r.json();
-   t.innerHTML = data.response.replace(/\n/g, "<br>");
+   console.log("HTTP Status:", r.status);
 
- } catch(e) {
-   t.innerText="⚠️ Server is offline. Try again in a moment.";
+   const raw = await r.text();
+   console.log("RAW Response:", raw);
+
+   let data;
+   try {
+     data = JSON.parse(raw);
+   } catch {
+     t.innerText = "⚠️ Invalid response from server";
+     return;
+   }
+
+   if(r.ok && data.response){
+     t.innerHTML = data.response.replace(/\n/g,"<br>");
+   } else {
+     t.innerText = "⚠️ Server error (" + r.status + ")";
+   }
+
+ } catch(err){
+   console.error("Fetch Error:", err);
+   t.innerText = "⚠️ Network error (check backend / ngrok)";
  }
 }
 
-// Enter key
-msg.addEventListener("keypress", e => {
-  if(e.key === "Enter") send();
+// ENTER KEY SUPPORT
+document.getElementById("msg").addEventListener("keypress", e=>{
+ if(e.key==="Enter") send();
 });
+
 </script>
 
 </body>
