@@ -19,21 +19,26 @@ header {
   text-align: center;
   font-size: 1.5em;
   font-weight: bold;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
 #chat {
   padding: 20px;
-  height: 68vh;
+  height: 67vh;
   overflow-y: auto;
+  scroll-behavior: smooth;
+  box-sizing: border-box;
 }
 
 .msg {
   padding: 12px 18px;
   margin: 10px;
   border-radius: 18px;
-  max-width: 75%;
-  font-size: 0.95em;
-  line-height: 1.5;
+  max-width: 82%;
+  font-size: 0.97em;
+  line-height: 1.55;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   word-wrap: break-word;
   white-space: pre-wrap;
 }
@@ -41,15 +46,17 @@ header {
 .user {
   background: #d1e7dd;
   margin-left: auto;
+  border: 1px solid #a5d6a7;
 }
 
 .bot {
   background: #ffffff;
+  border: 1px solid #cfd8dc;
 }
 
 #quick {
   text-align: center;
-  padding: 8px;
+  padding: 8px 10px 0 10px;
 }
 
 #quick button {
@@ -59,6 +66,7 @@ header {
   border: none;
   background: #e0f2f1;
   cursor: pointer;
+  font-size: 0.9em;
 }
 
 #controls {
@@ -73,7 +81,17 @@ header {
   box-sizing: border-box;
 }
 
-select, input {
+select {
+  padding: 12px;
+  border: 1px solid #cfd8dc;
+  border-radius: 8px;
+  font-size: 0.95em;
+  outline: none;
+  background: white;
+}
+
+input {
+  flex: 1;
   padding: 12px;
   border: 1px solid #cfd8dc;
   border-radius: 8px;
@@ -81,12 +99,12 @@ select, input {
   outline: none;
 }
 
-input {
-  flex: 1;
+input:focus {
+  border: 1px solid #4CAF50;
 }
 
 button.send {
-  padding: 12px 20px;
+  padding: 12px 18px;
   background: linear-gradient(90deg, #4CAF50, #66bb6a);
   color: white;
   border: none;
@@ -120,7 +138,7 @@ button.send {
   <button onclick="quick('Explain photosynthesis')">Explain</button>
   <button onclick="quick('Quiz me fast on genetics')">Quiz</button>
   <button onclick="quick('Summarize this topic')">Summary</button>
-  <button onclick="quick('Check my answers: A B C')">Check</button>
+  <button onclick="quick('Explain bronchial asthma 15 mark')">15 Mark</button>
 </div>
 
 <div id="controls">
@@ -142,7 +160,7 @@ const API = "https://sincere-urgent-shuffle.ngrok-free.dev/ask";
 function add(text, type) {
   const d = document.createElement("div");
   d.className = "msg " + type;
-  d.innerHTML = text.replace(/\n/g, "<br>");
+  d.textContent = text;
   document.getElementById("chat").appendChild(d);
   document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
   return d;
@@ -156,19 +174,19 @@ function quick(text) {
 async function send() {
   const input = document.getElementById("msg");
   const mode = document.getElementById("mode").value;
-  const message = input.value.trim();
-  if (!message) return;
+  const m = input.value.trim();
+  if (!m) return;
 
-  add(message, "user");
+  add(m, "user");
   input.value = "";
 
-  const t = add("Thinking <span class='typing'><span>.</span><span>.</span><span>.</span></span>", "bot");
+  const t = add("Thinking...", "bot");
 
   try {
     const r = await fetch(API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, mode })
+      body: JSON.stringify({ message: m, mode: mode })
     });
 
     const raw = await r.text();
@@ -177,24 +195,24 @@ async function send() {
     try {
       data = JSON.parse(raw);
     } catch (e) {
-      t.innerText = "⚠️ Invalid response from server";
+      t.textContent = "⚠️ Invalid response from server";
       console.error("Raw response:", raw);
       return;
     }
 
     if (r.ok && data.response) {
-      t.innerHTML = data.response.replace(/\n/g, "<br>");
+      t.textContent = data.response;
     } else {
-      t.innerText = "⚠️ Server error";
-      console.error("HTTP status:", r.status, "Raw:", raw);
+      t.textContent = "⚠️ Server error";
+      console.error("Status:", r.status, "Raw:", raw);
     }
-  } catch (err) {
-    console.error(err);
-    t.innerText = "⚠️ Network error (check backend / ngrok)";
+  } catch (e) {
+    console.error(e);
+    t.textContent = "⚠️ Network error (check backend / ngrok)";
   }
 }
 
-document.getElementById("msg").addEventListener("keypress", e => {
+document.getElementById("msg").addEventListener("keypress", (e) => {
   if (e.key === "Enter") send();
 });
 </script>
